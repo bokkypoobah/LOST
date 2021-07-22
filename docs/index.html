@@ -362,8 +362,8 @@
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="connected ? 'Retrieve ERC721 Info' : 'Please click Connect on the top right'" class="mb-1">
-                        <b-button :disabled="!connected" size="sm" @click="retrieveTokenInfo()" variant="outline-primary">
-                          Retrieve Info Via Web3
+                        <b-button :disabled="!connected" size="sm" @click="loadERC721TokenInfo()" variant="outline-primary">
+                          Retrieve ERC-721 Token Info Via Web3
                         </b-button>
                       </b-form-group>
 
@@ -377,6 +377,12 @@
 
                       <b-form-group label-cols="4" content-cols="8" label="Total Supply" label-align="right" class="mb-1">
                         <b-form-input size="sm" v-model="settings.contract.totalSupply" readonly class="w-50"></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve ERC721 TokenIds And Owners' : 'Please retrieve ERC-721 info above'" class="mb-1">
+                        <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadERC721TokenIdsAndOwners()" variant="outline-primary">
+                          Retrieve ERC-721 TokenIds And Owners Via Web3
+                        </b-button>
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
@@ -995,14 +1001,65 @@
               }
             }
           },
-          async retrieveTokenInfo() {
-            console.log("retrieveTokenInfo: " + JSON.stringify(this.settings.contract));
+          async loadERC721TokenInfo() {
+            console.log("loadERC721TokenInfo: " + JSON.stringify(this.settings.contract));
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
             const info = await erc721Helper.tokenInfo(this.settings.contract.address);
             this.settings.contract.symbol = info[0];
             this.settings.contract.name = info[1];
             this.settings.contract.totalSupply = parseInt(info[2].toString());
+          },
+          async loadERC721TokenIdsAndOwners() {
+            console.log("loadERC721TokenIdsAndOwners: " + JSON.stringify(this.settings.contract));
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
+            const owners = [];
+            const NFTOWNERBATCHSIZE = 500;
+            const totalSupply = this.settings.contract.totalSupply;
+            for (let i = 0; i < totalSupply; i += NFTOWNERBATCHSIZE) {
+              const to = (i + NFTOWNERBATCHSIZE > totalSupply) ? totalSupply : i + NFTOWNERBATCHSIZE;
+              this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
+              const ownersResult = await erc721Helper.owners(this.settings.contract.address, i, to);
+              console.log(new Date().toUTCString() + " from: " + i + ", to: " + to + ", size: " + ownersResult[0].length);
+              for (let j = 0; j < ownersResult[0].length; j++) {
+                owners.push({ tokenId: ownersResult[0][j].toString(), owner: ownersResult[1][j] });
+              }
+            }
+            console.log(JSON.stringify(owners, null, 2));
+            // this.owners = owners;
+            // localStorage.setItem('lostOwners', JSON.stringify(owners));
+            // const ensMap = {};
+            // for (let i in owners) {
+            //   const owner = owners[i].toLowerCase();
+            //   if (!ensMap[owner]) {
+            //     ensMap[owner] = owners[i];
+            //   }
+            // }
+            // ensMap[this.account.toLowerCase()] = this.account;
+            // ensMap["0x000000000000000000000000000000000000dEaD".toLowerCase()] = "0DEAD_";
+            // ensMap["0xcCcBF11AC3030ee8CD7a04CFE15a3718df6dD030".toLowerCase()] = "NFT20_";
+            // let addresses = Object.keys(ensMap);
+            // const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+            // const ENSOWNERBATCHSIZE = 500;
+            // for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+            //   this.processing = "RETRIEVING LIVE ENS REVERSE RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " OF " + ethers.utils.commify(addresses.length);
+            //   const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+            //   const allnames = await ensReverseRecordsContract.getNames(batch);
+            //   // NOT CHECKING ADDRESSES AS THE ADDRESSES CAME FROM A CONTRACT. AND account. const validNames = allnames.filter((n) => normalize(n) === n );
+            //   for (let j = 0; j < batch.length; j++) {
+            //     const address = batch[j];
+            //     const name = allnames[j];
+            //     ensMap[address] = name != null && name.length > 0 ? name : address;
+            //     // const normalized = normalize(address);
+            //   }
+            // }
+            // this.ensMap = ensMap;
+            // localStorage.setItem('lostENSMap', JSON.stringify(ensMap));
+            // this.processing = "RECALCULATING DATA";
+            // this.recalculate('data loaded via web3');
+
+
           },
 
           async connect1_todelete() {
