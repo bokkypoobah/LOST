@@ -64,7 +64,7 @@
               LOST?
             </b-navbar-brand>
             <div v-for="item in getSelectedShowcase">
-              <b-link @click="displayToken(item)">
+              <b-link @click="displayToken('./images/' + item.image)">
                 <b-avatar rounded="sm" variant="light" size="3.0rem" :src="'./images/' + item.image" v-b-popover.hover.bottom="'#' + item.tokenId" class="ml-2"></b-avatar>
               </b-link>
             </div>
@@ -81,11 +81,11 @@
               <!-- <b-modal size="xl" ref="gif-frame-extraction-modal" hide-footer @shown="onGIFFrameSelectionModalOpened" class="w-100"> -->
               <b-modal ref="gif-frame-extraction-modal" hide-footer @shown="onGIFFrameSelectionModalOpened" dialog-class="mw-100 w-50">
                 <template #modal-title>
-                  {{ selectedTokenId == null ? null : data[selectedTokenId].name }}
+                  {{ selectedTokenId == null ? null : selectedTokenId }}
                   <span v-if="selectedItemIsGIF"> - Frame {{ selectedItemFrame == null ? '(loading)' : selectedItemFrame }}</span>
                 </template>
                 <div class="d-block text-center">
-                  <img id="thegif1" :src="selectedTokenId == null ? null : data[selectedTokenId].osimage" :rel:animated_src="selectedTokenId == null ? null : data[selectedTokenId].osimage" width="600" height="600" rel:auto_play="0" rel:rubbable="1" class="pr-3" />
+                  <img id="thegif1" :src="selectedTokenId == null ? null : selectedTokenId" :rel:animated_src="selectedTokenId == null ? null : selectedTokenId" width="600" height="600" rel:auto_play="0" rel:rubbable="1" class="pr-3" />
                 </div>
                 <b-input-group v-if="selectedItemIsGIF">
                   <template #prepend>
@@ -1246,9 +1246,9 @@
           },
 
           // --- GIF Frame Extraction ---
-          async displayToken(tokenId) {
+          async displayToken(image) {
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', this.data[tokenId].image);
+            xhr.open('GET', image);
             const t = this;
             xhr.onload = function() {
               if (xhr.response.substring(0, 3) == "GIF") {
@@ -1256,7 +1256,8 @@
               } else {
                 t.selectedItemIsGIF = false;
               }
-              t.selectedTokenId = tokenId;
+              // TODO
+              t.selectedTokenId = image;
               t.$refs['gif-frame-extraction-modal'].show();
             }
             xhr.onerror = function() {
