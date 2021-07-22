@@ -352,7 +352,7 @@
                 </b-card-text>
               </b-tab>
 
-              <b-tab active title="SYNC DATA">
+              <b-tab title="SYNC DATA">
                 <b-card-text>
                   <b-card header="Initial Sync For ERC-721 New Token Contracts" style="min-width: 60rem; max-width: 60rem;" class="mb-2">
                     <b-card-text>
@@ -740,17 +740,109 @@
             console.log(new Date().toUTCString() + " recalculate(from: " + from + ") start");
 
             if (from != 'selectedTags') {
+              await this.processOSData();
               // this.data = BASTARDDATA;
-              this.generateTokenData();
-              this.calculateTokensOwned();
-              this.calculateCategories();
+              // this.generateTokenData();
+              // this.calculateTokensOwned();
+              // this.calculateCategories();
             }
             this.tokensSearchResults = this.calculateSearchResults();
-            this.collatedOwners = this.calculateCollatedOwners();
-            console.log(new Date().toUTCString() + " recalculate(from: " + from + ") processOSData() begin");
-            await this.processOSData();
+            // this.collatedOwners = this.calculateCollatedOwners();
             this.saveSettings();
-            console.log(new Date().toUTCString() + " recalculate(from: " + from + ") processOSData() completed");
+            console.log(new Date().toUTCString() + " recalculate(from: " + from + ") completed");
+          },
+
+          async processOSData() {
+            console.log(new Date().toUTCString() + " processOSData() start");
+            var db0 = new Dexie("LostDB");
+            db0.version(1).stores({
+              // apiData: 'contract,tokenId,asset,timestamp'
+              apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
+            });
+            const tokenIdIndex = {};
+            const results = [];
+            for (let i = 0; i < this.owners.length; i++) {
+              tokenIdIndex[this.owners[i].tokenId] = i;
+              results.push(this.owners[i]);
+            }
+            console.log(JSON.stringify(results.slice(0, 5), null, 2));
+            // console.log(JSON.stringify(tokenIdIndex, null, 2));
+
+            if (this.settings.contract.address && this.settings.contract.address.length > 1) {
+              const osAssets = await db0.apiData.where("contract").equalsIgnoreCase(this.settings.contract.address).toArray();
+              const osData = {};
+              // console.log(JSON.stringify(osAssets.slice(0, 3), null, 2));
+              for (const asset of osAssets) {
+                if (asset.tokenId == 5389) {
+                  console.log(JSON.stringify(asset, null, 2));
+                }
+                let lastSale = null;
+                if (asset.asset.last_sale) {
+                  lastSale = {
+                    totalPrice: new BigNumber(asset.asset.last_sale.total_price).shift(-18),
+                    symbol: asset.asset.last_sale.payment_token.symbol,
+                    decimals: asset.asset.last_sale.payment_token.decimals,
+                    ethPrice: asset.asset.last_sale.payment_token.eth_price,
+                    usdPrice: asset.asset.last_sale.payment_token.usd_price,
+                    tx: asset.asset.last_sale.transaction.transaction_hash,
+                    assetBundle: asset.asset.last_sale.asset_bundle,
+                    eventType: asset.asset.last_sale.event_type,
+                    eventTimestamp: asset.asset.last_sale.event_timestamp,
+                  }
+                }
+                let sellOrder = null;
+                if (asset.asset.sell_orders) {
+                  const numberSellOrders = asset.asset.sell_orders.length;
+                  if (numberSellOrders > 1) {
+                    console.log("WARNING: numberSellOrders > 1 #" + asset.tokenId + " " + JSON.stringify(asset.asset, null, 2));
+                  }
+                  for (const so of asset.asset.sell_orders) {
+                    sellOrder = {
+                      basePrice: so.base_price,
+                      currentPrice: new BigNumber(so.current_price).shift(-18),
+                      symbol: so.payment_token_contract.symbol,
+                      decimals: so.payment_token_contract.decimals,
+                      ethPrice: so.payment_token_contract.eth_price,
+                      usdPrice: so.payment_token_contract.usd_price,
+                      cancelled: so.cancelled,
+                      feeMethod: so.fee_method,
+                      side: so.side,
+                      saleKind: so.sale_kind,
+                      createdDate: so.created_date,
+                      closingDate: so.closing_date,
+                      closingExtendable: so.closing_extendable,
+                      expirationTime: so.expiration_time,
+                      listingTime: so.listing_time,
+                    };
+                  }
+                }
+                const result = results[tokenIdIndex[asset.tokenId]];
+                result.name = asset.asset.name;
+                result.description = asset.asset.description;
+                result.externalLink = asset.asset.external_link;
+
+                result.imageOriginalURL = asset.asset.image_original_url;
+                result.imagePreviewURL = asset.asset.image_preview_url;
+                result.imageThumbnailURL = asset.asset.image_thumbnail_url;
+                result.imageURL = asset.asset.image_url;
+                result.osOwner = asset.asset.owner.address;
+                result.numSales = asset.asset.num_sales;
+                result.tokenMetadata = asset.asset.token_metadata;
+                result.permalink = asset.asset.permalink;
+
+                result.sellOrder = sellOrder;
+                result.lastSale = lastSale;
+                result.traits = asset.asset.traits;
+                // console.log("result: " + JSON.stringify(result));
+                osData[asset.tokenId] = { sellOrder: sellOrder, lastSale: lastSale };
+              }
+              // console.log(JSON.stringify(osData, null, 8));
+              this.osData = osData;
+            }
+            console.log(JSON.stringify(this.owners.slice(0, 5), null, 2));
+            console.log(JSON.stringify(results.slice(0, 5), null, 2));
+            this.data = results;
+            console.log(new Date().toUTCString() + " processOSData() completed");
           },
 
           generateTokenData() {
@@ -942,98 +1034,6 @@
             }
             console.log(new Date().toUTCString() + " - calculateCollatedOwners() completed");
             return results;
-          },
-
-          async processOSData() {
-            console.log(new Date().toUTCString() + " processOSData() start");
-            var db0 = new Dexie("LostDB");
-            db0.version(1).stores({
-              // apiData: 'contract,tokenId,asset,timestamp'
-              apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
-            });
-            const tokenIdIndex = {};
-            const results = [];
-            for (let i = 0; i < this.owners.length; i++) {
-              tokenIdIndex[this.owners[i].tokenId] = i;
-              results.push(this.owners[i]);
-            }
-            console.log(JSON.stringify(results.slice(0, 5), null, 2));
-            // console.log(JSON.stringify(tokenIdIndex, null, 2));
-
-            if (this.settings.contract.address && this.settings.contract.address.length > 1) {
-              const osAssets = await db0.apiData.where("contract").equalsIgnoreCase(this.settings.contract.address).toArray();
-              const osData = {};
-              // console.log(JSON.stringify(osAssets.slice(0, 3), null, 2));
-              for (const asset of osAssets) {
-                if (asset.tokenId == 5389) {
-                  console.log(JSON.stringify(asset, null, 2));
-                }
-                let lastSale = null;
-                if (asset.asset.last_sale) {
-                  lastSale = {
-                    totalPrice: new BigNumber(asset.asset.last_sale.total_price).shift(-18),
-                    symbol: asset.asset.last_sale.payment_token.symbol,
-                    decimals: asset.asset.last_sale.payment_token.decimals,
-                    ethPrice: asset.asset.last_sale.payment_token.eth_price,
-                    usdPrice: asset.asset.last_sale.payment_token.usd_price,
-                    tx: asset.asset.last_sale.transaction.transaction_hash,
-                    assetBundle: asset.asset.last_sale.asset_bundle,
-                    eventType: asset.asset.last_sale.event_type,
-                    eventTimestamp: asset.asset.last_sale.event_timestamp,
-                  }
-                }
-                let sellOrder = null;
-                if (asset.asset.sell_orders) {
-                  const numberSellOrders = asset.asset.sell_orders.length;
-                  if (numberSellOrders > 1) {
-                    console.log("WARNING: numberSellOrders > 1 #" + asset.tokenId + " " + JSON.stringify(asset.asset, null, 2));
-                  }
-                  for (const so of asset.asset.sell_orders) {
-                    sellOrder = {
-                      basePrice: so.base_price,
-                      currentPrice: new BigNumber(so.current_price).shift(-18),
-                      symbol: so.payment_token_contract.symbol,
-                      decimals: so.payment_token_contract.decimals,
-                      ethPrice: so.payment_token_contract.eth_price,
-                      usdPrice: so.payment_token_contract.usd_price,
-                      cancelled: so.cancelled,
-                      feeMethod: so.fee_method,
-                      side: so.side,
-                      saleKind: so.sale_kind,
-                      createdDate: so.created_date,
-                      closingDate: so.closing_date,
-                      closingExtendable: so.closing_extendable,
-                      expirationTime: so.expiration_time,
-                      listingTime: so.listing_time,
-                    };
-                  }
-                }
-                const result = results[tokenIdIndex[asset.tokenId]];
-                result.name = asset.asset.name;
-                result.description = asset.asset.description;
-                result.externalLink = asset.asset.external_link;
-
-                result.imageOriginalURL = asset.asset.image_original_url;
-                result.imagePreviewURL = asset.asset.image_preview_url;
-                result.imageThumbnailURL = asset.asset.image_thumbnail_url;
-                result.imageURL = asset.asset.image_url;
-                result.osOwner = asset.asset.owner.address;
-                result.numSales = asset.asset.num_sales;
-                result.tokenMetadata = asset.asset.token_metadata;
-                result.permalink = asset.asset.permalink;
-
-                result.sellOrder = sellOrder;
-                result.lastSale = lastSale;
-                result.traits = asset.asset.traits;
-                // console.log("result: " + JSON.stringify(result));
-                osData[asset.tokenId] = { sellOrder: sellOrder, lastSale: lastSale };
-              }
-              // console.log(JSON.stringify(osData, null, 8));
-              this.osData = osData;
-            }
-            console.log(JSON.stringify(this.owners.slice(0, 5), null, 2));
-            console.log(JSON.stringify(results.slice(0, 5), null, 2));
-            console.log(new Date().toUTCString() + " processOSData() completed");
           },
 
           // --- Web3 Connection ---
