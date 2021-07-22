@@ -1217,8 +1217,9 @@
             for (let i = this.settings.contract.loaded; i < to; i += BATCHSIZE) {
               let url = "https://api.opensea.io/api/v1/assets?asset_contract_address=" + contract + "\&order_direction=desc\&limit=50\&offset=0";
               for (let j = i; j < i + BATCHSIZE && j < to; j++) {
-                url = url + "&token_ids=" + j;
+                url = url + "&token_ids=" + this.owners[j].tokenId;
               }
+              console.log(url);
               const elapsed = parseInt(new Date() / 1000) - timestamp;
               // this.processing = "DOWNLOADING LIVE DATA FROM OPENSEA: " + ethers.utils.commify(i) + " (BATCH SIZE " + BATCHSIZE + ") OF " + ethers.utils.commify(to) + ". ELAPSED " + elapsed + " SECONDS. CONTINUE BROWSING THE BEAUTIFUL BASTRADS IN THE MEANTIME";
               const data = await fetch(url).then(response => response.json());
