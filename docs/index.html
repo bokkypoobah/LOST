@@ -244,7 +244,7 @@
                       <div v-for="record in pagedTokensResults">
                         <b-card body-class="p-1" header-class="p-1" footer-class="p-1" img-top class="m-2 p-1 border-0">
                           <b-link @click="displayToken(record.tokenId)" v-b-popover.hover="'CLICK FOR DETAILS'">
-                            <b-img-lazy :width="cardImageSizeCurrent + '%'" :src="record.osimage" />
+                            <b-img-lazy :width="cardImageSizeCurrent + '%'" :src="record.imageURL" />
                           </b-link>
                           <b-card-text>
                             <b-link :href="'https://www.bastardganpunks.club/v2/' + record.tokenId" v-b-popover.hover="'VIEW NFT IN ORIGNIAL WEBSHITE'" target="_blank">
