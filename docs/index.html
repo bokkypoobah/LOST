@@ -385,7 +385,7 @@
                         </b-button>
                       </b-form-group>
 
-                      <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
+                      <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply != null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
                         <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
                           Retrieve OS Data
                         </b-button>
@@ -411,10 +411,6 @@
                       <!-- <b-form-select size="sm" @change="recalculate('selectedTags')" v-model="selectedTags" :options="getTags" multiple :select-size="10" variant="outline-primary"></b-form-select> -->
                     </b-card-text>
                   </b-card>
-                  settings.contract: {{ settings.contract }}
-                </b-card-text>
-                <b-card-text>
-                   TAKES ~ 6 MINUTES. YOU CAN CONTINUE BROWSING THE BEAUTIFUL BASTARDS WHILE THIS PROCESS RUNS IN THE BACKGROUND.
                 </b-card-text>
               </b-tab>
 
