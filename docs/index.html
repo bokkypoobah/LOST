@@ -951,12 +951,21 @@
               // apiData: 'contract,tokenId,asset,timestamp'
               apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
             });
+            const tokenIdIndex = {};
+            const results = [];
+            for (let i = 0; i < this.owners.length; i++) {
+              tokenIdIndex[this.owners[i].tokenId] = i;
+              results.push(this.owners[i]);
+            }
+            console.log(JSON.stringify(results.slice(0, 5), null, 2));
+            // console.log(JSON.stringify(tokenIdIndex, null, 2));
+
             if (this.settings.contract.address && this.settings.contract.address.length > 1) {
               const osAssets = await db0.apiData.where("contract").equalsIgnoreCase(this.settings.contract.address).toArray();
               const osData = {};
-              console.log(JSON.stringify(osAssets.slice(0, 3), null, 2));
+              // console.log(JSON.stringify(osAssets.slice(0, 3), null, 2));
               for (const asset of osAssets) {
-                if (asset.tokenId == 1712345) {
+                if (asset.tokenId == 5389) {
                   console.log(JSON.stringify(asset, null, 2));
                 }
                 let lastSale = null;
@@ -999,11 +1008,31 @@
                     };
                   }
                 }
+                const result = results[tokenIdIndex[asset.tokenId]];
+                result.name = asset.asset.name;
+                result.description = asset.asset.description;
+                result.externalLink = asset.asset.external_link;
+
+                result.imageOriginalURL = asset.asset.image_original_url;
+                result.imagePreviewURL = asset.asset.image_preview_url;
+                result.imageThumbnailURL = asset.asset.image_thumbnail_url;
+                result.imageURL = asset.asset.image_url;
+                result.osOwner = asset.asset.owner.address;
+                result.numSales = asset.asset.num_sales;
+                result.tokenMetadata = asset.asset.token_metadata;
+                result.permalink = asset.asset.permalink;
+
+                result.sellOrder = sellOrder;
+                result.lastSale = lastSale;
+                result.traits = asset.asset.traits;
+                // console.log("result: " + JSON.stringify(result));
                 osData[asset.tokenId] = { sellOrder: sellOrder, lastSale: lastSale };
               }
               // console.log(JSON.stringify(osData, null, 8));
               this.osData = osData;
             }
+            console.log(JSON.stringify(this.owners.slice(0, 5), null, 2));
+            console.log(JSON.stringify(results.slice(0, 5), null, 2));
             console.log(new Date().toUTCString() + " processOSData() completed");
           },
 
