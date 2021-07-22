@@ -951,57 +951,59 @@
               // apiData: 'contract,tokenId,asset,timestamp'
               apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
             });
-            const osAssets = await db0.apiData.toArray();
-            const osData = {};
-            // console.log(JSON.stringify(osAssets[4553], null, 2));
-            for (const asset of osAssets) {
-              if (asset.tokenId == 1712345) {
-                console.log(JSON.stringify(asset, null, 2));
-              }
-              let lastSale = null;
-              if (asset.asset.last_sale) {
-                lastSale = {
-                  totalPrice: new BigNumber(asset.asset.last_sale.total_price).shift(-18),
-                  symbol: asset.asset.last_sale.payment_token.symbol,
-                  decimals: asset.asset.last_sale.payment_token.decimals,
-                  ethPrice: asset.asset.last_sale.payment_token.eth_price,
-                  usdPrice: asset.asset.last_sale.payment_token.usd_price,
-                  tx: asset.asset.last_sale.transaction.transaction_hash,
-                  assetBundle: asset.asset.last_sale.asset_bundle,
-                  eventType: asset.asset.last_sale.event_type,
-                  eventTimestamp: asset.asset.last_sale.event_timestamp,
+            if (this.settings.contract.address && this.settings.contract.address.length > 1) {
+              const osAssets = await db0.apiData.where("contract").equalsIgnoreCase(this.settings.contract.address).toArray();
+              const osData = {};
+              console.log(JSON.stringify(osAssets.slice(0, 3), null, 2));
+              for (const asset of osAssets) {
+                if (asset.tokenId == 1712345) {
+                  console.log(JSON.stringify(asset, null, 2));
                 }
-              }
-              let sellOrder = null;
-              if (asset.asset.sell_orders) {
-                const numberSellOrders = asset.asset.sell_orders.length;
-                if (numberSellOrders > 1) {
-                  console.log("WARNING: numberSellOrders > 1 #" + asset.tokenId + " " + JSON.stringify(asset.asset, null, 2));
+                let lastSale = null;
+                if (asset.asset.last_sale) {
+                  lastSale = {
+                    totalPrice: new BigNumber(asset.asset.last_sale.total_price).shift(-18),
+                    symbol: asset.asset.last_sale.payment_token.symbol,
+                    decimals: asset.asset.last_sale.payment_token.decimals,
+                    ethPrice: asset.asset.last_sale.payment_token.eth_price,
+                    usdPrice: asset.asset.last_sale.payment_token.usd_price,
+                    tx: asset.asset.last_sale.transaction.transaction_hash,
+                    assetBundle: asset.asset.last_sale.asset_bundle,
+                    eventType: asset.asset.last_sale.event_type,
+                    eventTimestamp: asset.asset.last_sale.event_timestamp,
+                  }
                 }
-                for (const so of asset.asset.sell_orders) {
-                  sellOrder = {
-                    basePrice: so.base_price,
-                    currentPrice: new BigNumber(so.current_price).shift(-18),
-                    symbol: so.payment_token_contract.symbol,
-                    decimals: so.payment_token_contract.decimals,
-                    ethPrice: so.payment_token_contract.eth_price,
-                    usdPrice: so.payment_token_contract.usd_price,
-                    cancelled: so.cancelled,
-                    feeMethod: so.fee_method,
-                    side: so.side,
-                    saleKind: so.sale_kind,
-                    createdDate: so.created_date,
-                    closingDate: so.closing_date,
-                    closingExtendable: so.closing_extendable,
-                    expirationTime: so.expiration_time,
-                    listingTime: so.listing_time,
-                  };
+                let sellOrder = null;
+                if (asset.asset.sell_orders) {
+                  const numberSellOrders = asset.asset.sell_orders.length;
+                  if (numberSellOrders > 1) {
+                    console.log("WARNING: numberSellOrders > 1 #" + asset.tokenId + " " + JSON.stringify(asset.asset, null, 2));
+                  }
+                  for (const so of asset.asset.sell_orders) {
+                    sellOrder = {
+                      basePrice: so.base_price,
+                      currentPrice: new BigNumber(so.current_price).shift(-18),
+                      symbol: so.payment_token_contract.symbol,
+                      decimals: so.payment_token_contract.decimals,
+                      ethPrice: so.payment_token_contract.eth_price,
+                      usdPrice: so.payment_token_contract.usd_price,
+                      cancelled: so.cancelled,
+                      feeMethod: so.fee_method,
+                      side: so.side,
+                      saleKind: so.sale_kind,
+                      createdDate: so.created_date,
+                      closingDate: so.closing_date,
+                      closingExtendable: so.closing_extendable,
+                      expirationTime: so.expiration_time,
+                      listingTime: so.listing_time,
+                    };
+                  }
                 }
+                osData[asset.tokenId] = { sellOrder: sellOrder, lastSale: lastSale };
               }
-              osData[asset.tokenId] = { sellOrder: sellOrder, lastSale: lastSale };
+              // console.log(JSON.stringify(osData, null, 8));
+              this.osData = osData;
             }
-            // console.log(JSON.stringify(osData, null, 8));
-            this.osData = osData;
             console.log(new Date().toUTCString() + " processOSData() completed");
           },
 
