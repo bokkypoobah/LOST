@@ -63,11 +63,11 @@
             <b-navbar-brand to="./" variant="primary" v-b-popover.hover.bottom="'LOST? OpenSea Explorer'">
               LOST?
             </b-navbar-brand>
-            <div v-for="item in getSelectedShowcase">
+            <!-- <div v-for="item in getSelectedShowcase">
               <b-link @click="displayToken(item)">
                 <b-avatar rounded="sm" variant="light" size="3.0rem" :src="data[item].osimage" v-b-popover.hover.bottom="'#' + item" class="ml-2"></b-avatar>
               </b-link>
-            </div>
+            </div> -->
             <b-navbar-nav class="ml-auto">
               <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'Connect via Web3'" @click="connect();" v-if="!connected">Connect</b-button>
               <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'Your wallet'" @click="disconnect();" v-if="connected">{{ ensOrShortName(account) }}</b-button>
@@ -379,14 +379,14 @@
                         <b-form-input size="sm" v-model="settings.contract.totalSupply" readonly class="w-50"></b-form-input>
                       </b-form-group>
 
-                      <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve ERC721 TokenIds And Owners' : 'Please retrieve ERC-721 info above'" class="mb-1">
+                      <b-form-group label-cols="4" content-cols="8" label="" :description="owners.length + ' tokenIds with ' + Object.keys(ensMap).length + ' ENS records loaded'" class="mb-1">
                         <b-button :disabled="!connected || settings.contract.totalSupply == null" size="sm" @click="loadERC721TokenIdsAndOwners()" variant="outline-primary">
                           Retrieve ERC-721 TokenIds And Owners Via Web3
                         </b-button>
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
-                        <b-button :disabled="!connected || settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
+                        <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
                           Retrieve OS Data
                         </b-button>
                       </b-form-group>
@@ -1187,6 +1187,7 @@
             const records = [];
             const delay = ms => new Promise(res => setTimeout(res, ms));
             await delay(DELAYINMILLIS);
+            console.log(new Date().toUTCString() + " loadOSData() this.owners: " + JSON.stringify(this.owners));
             const to = this.settings.contract.totalSupply;
             console.log(new Date().toUTCString() + " loadOSData() to: " + to);
             const contract = this.settings.contract.address.toLowerCase();
