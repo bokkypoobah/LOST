@@ -326,13 +326,13 @@
                         <b-form-tags size="sm" @input="saveTags" v-model="tags[data.item.tokenId]" tag-variant="primary" tag-pills size="sm" separator=" " v-b-popover.hover="'ENTER NEW TAGS'" placeholder="" class="ml-0 mt-1"></b-form-tags>
                         <div v-if="osData[data.item.tokenId] && osData[data.item.tokenId].sellOrder">
                           <b-button size="sm" variant="warning" :href="data.item.permalink + '?ref=0x000001f568875F378Bf6d170B790967FE429C81A'" v-b-popover.hover="'PURCHASE IN OPENSEA'" target="_blank" class="m-1 p-1">
-                            <b-badge size="sm" variant="light">{{ formatETH(osData[data.item.tokenId].sellOrder.currentPrice) }}</b-badge>
+                            <b-badge size="sm" variant="light">{{ commify(osData[data.item.tokenId].sellOrder.currentPrice) }}</b-badge>
                             {{ osData[data.item.tokenId].sellOrder.symbol }} <font size="-2">{{ formatDate(osData[data.item.tokenId].sellOrder.listingTime) }}</font>
                           </b-button>
                         </div>
                         <div v-if="osData[data.item.tokenId] && osData[data.item.tokenId].lastSale">
                           <b-button size="sm" variant="success" :href="'https://etherscan.io/tx/' + osData[data.item.tokenId].lastSale.tx" v-b-popover.hover="'VIEW PURCHASE IN BLOCK EXLPORER'" target="_blank" class="m-1 p-1">
-                            <b-badge size="sm" variant="light">{{ formatETH(osData[data.item.tokenId].lastSale.totalPrice) }}</b-badge>
+                            <b-badge size="sm" variant="light">{{ commify(osData[data.item.tokenId].lastSale.totalPrice) }}</b-badge>
                             {{ osData[data.item.tokenId].lastSale.symbol }} <font size="-2">{{ formatDate(osData[data.item.tokenId].lastSale.eventTimestamp) }}</font>
                           </b-button>
                         </div>
@@ -357,7 +357,7 @@
                   <b-card header="Initial Sync For ERC-721 New Token Contracts" style="min-width: 60rem; max-width: 60rem;" class="mb-2">
                     <b-card-text>
 
-                      <b-form-group label-cols="4" content-cols="8" label="Contract address" label-align="right" description="Only ERC-721 contracts supported." class="mb-1">
+                      <b-form-group label-cols="4" content-cols="8" label="Contract address" label-align="right" description="Only ERC-721 contracts supported. Small data set e.g. BGANPUNKSV1 '0x9126B817CCca682BeaA9f4EaE734948EE1166Af1'" class="mb-1">
                         <b-form-input size="sm" v-model="settings.contract.address" placeholder="Enter contract address"></b-form-input>
                       </b-form-group>
 
@@ -380,13 +380,13 @@
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve ERC721 TokenIds And Owners' : 'Please retrieve ERC-721 info above'" class="mb-1">
-                        <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadERC721TokenIdsAndOwners()" variant="outline-primary">
+                        <b-button :disabled="!connected || settings.contract.totalSupply == null" size="sm" @click="loadERC721TokenIdsAndOwners()" variant="outline-primary">
                           Retrieve ERC-721 TokenIds And Owners Via Web3
                         </b-button>
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
-                        <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
+                        <b-button :disabled="!connected || settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
                           Retrieve OS Data
                         </b-button>
                       </b-form-group>
@@ -723,7 +723,8 @@
             console.log(new Date().toUTCString() + " recalculate(from: " + from + ") start");
 
             if (from != 'selectedTags') {
-              this.data = BASTARDDATA;
+              // this.data = BASTARDDATA;
+              this.generateTokenData();
               this.calculateTokensOwned();
               this.calculateCategories();
             }
@@ -735,10 +736,33 @@
             console.log(new Date().toUTCString() + " recalculate(from: " + from + ") processOSData() completed");
           },
 
+          generateTokenData() {
+            const results = [];
+            for (const record of this.owners) {
+              // console.log(new Date().toUTCString() + " - calculateTokensOwned() record: " + JSON.stringify(record));
+              results.push(record);
+            }
+            // if (this.owners.length > 0) {
+              // const account = this.account.toLowerCase();
+              // console.log(new Date().toUTCString() + " - calculateTokensOwned() account: " + JSON.stringify(account));
+              // for (let i in BASTARDDATA) {
+              //   const item = BASTARDDATA[i];
+              //   const owner = this.owners[i] ? this.owners[i].owner : null;
+              //   if (owner && owner.toLowerCase() == account) {
+              //     results.push(item.tokenId);
+              //   }
+              // }
+            // }
+            console.log(new Date().toUTCString() + " - calculateTokensOwned() completed: " + JSON.stringify(results));
+            this.data = results;
+          },
+
+
           calculateTokensOwned() {
             const results = [];
             if (this.owners.length > 0 && this.account) {
               const account = this.account.toLowerCase();
+              console.log(new Date().toUTCString() + " - calculateTokensOwned() account: " + JSON.stringify(account));
               for (let i in BASTARDDATA) {
                 const item = BASTARDDATA[i];
                 const owner = this.owners[i] ? this.owners[i].owner : null;
@@ -1275,9 +1299,6 @@
             return s;
           },
           commify(e) {
-            return ethers.utils.commify(e.toString());
-          },
-          formatETH(e) {
             return ethers.utils.commify(e.toString());
           },
           formatDate(d) {
