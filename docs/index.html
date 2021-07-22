@@ -741,7 +741,7 @@
               const account = this.account.toLowerCase();
               for (let i in BASTARDDATA) {
                 const item = BASTARDDATA[i];
-                const owner = this.owners[i];
+                const owner = this.owners[i] ? this.owners[i].owner : null;
                 if (owner && owner.toLowerCase() == account) {
                   results.push(item.tokenId);
                 }
@@ -824,7 +824,7 @@
               for (let i in stage2Data) {
                 const d = stage2Data[i];
                 const owner = this.owners[d.tokenId] ? this.owners[d.tokenId].toLowerCase() : null;
-                const ensName = owner == null ? null : this.ensMap[owner];
+                const ensName = owner == null ? null : this.ensMap[owner].owner;
                 for (searchAccount of searchAccounts) {
                   const s = searchAccount.toLowerCase();
                   if (owner != null && owner.includes(s)) {
@@ -1019,7 +1019,7 @@
             const totalSupply = this.settings.contract.totalSupply;
             for (let i = 0; i < totalSupply; i += NFTOWNERBATCHSIZE) {
               const to = (i + NFTOWNERBATCHSIZE > totalSupply) ? totalSupply : i + NFTOWNERBATCHSIZE;
-              this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
+              // this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
               const ownersResult = await erc721Helper.owners(this.settings.contract.address, i, to);
               console.log(new Date().toUTCString() + " from: " + i + ", to: " + to + ", size: " + ownersResult[0].length);
               for (let j = 0; j < ownersResult[0].length; j++) {
@@ -1027,39 +1027,40 @@
               }
             }
             console.log(JSON.stringify(owners, null, 2));
-            // this.owners = owners;
-            // localStorage.setItem('lostOwners', JSON.stringify(owners));
-            // const ensMap = {};
-            // for (let i in owners) {
-            //   const owner = owners[i].toLowerCase();
-            //   if (!ensMap[owner]) {
-            //     ensMap[owner] = owners[i];
-            //   }
-            // }
-            // ensMap[this.account.toLowerCase()] = this.account;
-            // ensMap["0x000000000000000000000000000000000000dEaD".toLowerCase()] = "0DEAD_";
-            // ensMap["0xcCcBF11AC3030ee8CD7a04CFE15a3718df6dD030".toLowerCase()] = "NFT20_";
-            // let addresses = Object.keys(ensMap);
-            // const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
-            // const ENSOWNERBATCHSIZE = 500;
-            // for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
+            this.owners = owners;
+            localStorage.setItem('lostOwners', JSON.stringify(owners));
+            const ensMap = {};
+
+            ensMap[this.account.toLowerCase()] = this.account.toLowerCase();
+            for (const record of owners) {
+              console.log(JSON.stringify(record, null, 2));
+              const owner = record.owner.toLowerCase();
+              if (!ensMap[owner]) {
+                ensMap[owner] = owner;
+              }
+            }
+            console.log(JSON.stringify(ensMap, null, 2));
+            let addresses = Object.keys(ensMap);
+            const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
+            const ENSOWNERBATCHSIZE = 500;
+            for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
             //   this.processing = "RETRIEVING LIVE ENS REVERSE RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " OF " + ethers.utils.commify(addresses.length);
-            //   const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
-            //   const allnames = await ensReverseRecordsContract.getNames(batch);
+              const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
+              const allnames = await ensReverseRecordsContract.getNames(batch);
             //   // NOT CHECKING ADDRESSES AS THE ADDRESSES CAME FROM A CONTRACT. AND account. const validNames = allnames.filter((n) => normalize(n) === n );
-            //   for (let j = 0; j < batch.length; j++) {
-            //     const address = batch[j];
-            //     const name = allnames[j];
-            //     ensMap[address] = name != null && name.length > 0 ? name : address;
-            //     // const normalized = normalize(address);
-            //   }
-            // }
-            // this.ensMap = ensMap;
-            // localStorage.setItem('lostENSMap', JSON.stringify(ensMap));
-            // this.processing = "RECALCULATING DATA";
-            // this.recalculate('data loaded via web3');
-
-
+              for (let j = 0; j < batch.length; j++) {
+                const address = batch[j];
+                const name = allnames[j];
+                ensMap[address] = name != null && name.length > 0 ? name : address;
+                // const normalized = normalize(address);
+              }
+            }
+            ensMap["0x000000000000000000000000000000000000dEaD".toLowerCase()] = "0xdEaD_";
+            console.log(JSON.stringify(ensMap, null, 2));
+            this.ensMap = ensMap;
+            localStorage.setItem('lostENSMap', JSON.stringify(ensMap));
+            // // this.processing = "RECALCULATING DATA";
+            this.recalculate('loadERC721TokenIdsAndOwners()');
           },
 
           async connect1_todelete() {
@@ -1302,11 +1303,15 @@
             localStorage.setItem('lostSettings', JSON.stringify(this.settings));
           },
           ensOrShortName(address) {
+            try {
               let name = this.ensMap[address.toLowerCase()];
               if (name != null) {
                 name = name.substring(0, 24);
               }
               return name;
+            } catch (e) {
+              return address;
+            }
           },
         },
 
