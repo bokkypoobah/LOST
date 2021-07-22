@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
-    <title>BESTBASTARDGANPUNKS</title>
+    <title>LOST?</title>
 
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css" />
     <link type="text/css" rel="stylesheet" href="css/bootstrap-vue.min.css"/>
@@ -60,8 +60,8 @@
       <b-container fluid class="m-0 p-2">
         <div>
           <b-navbar variant="light">
-            <b-navbar-brand to="./" variant="primary" v-b-popover.hover.bottom="'Best BastardGANPunks'">
-              BESTBASTARDGANPUNKS
+            <b-navbar-brand to="./" variant="primary" v-b-popover.hover.bottom="'LOST? OpenSea Explorer'">
+              LOST?
             </b-navbar-brand>
             <div v-for="item in getSelectedShowcase">
               <b-link @click="displayToken(item)">
@@ -69,8 +69,8 @@
               </b-link>
             </div>
             <b-navbar-nav class="ml-auto">
-              <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'CONNECT TO SEE YOUR BASTARDS'" @click="connect();" v-if="!connected">CONNECT MY FUCKING WALLET</b-button>
-              <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'DISCONNECT TO SEE BOKKY\'S BASTARDS'" @click="disconnect();" v-if="connected">MY FUCKING WALLET {{ ensOrShortName(account) }}</b-button>
+              <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'Connect via Web3'" @click="connect();" v-if="!connected">Connect</b-button>
+              <b-button size="sm" variant="outline-primary" class="ml-4" v-b-popover.hover="'Your wallet'" @click="disconnect();" v-if="connected">{{ ensOrShortName(account) }}</b-button>
             </b-navbar-nav>
           </b-navbar>
         </div>
@@ -352,11 +352,60 @@
                 </b-card-text>
               </b-tab>
 
-              <b-tab title="SYNC DATA">
+              <b-tab active title="SYNC DATA">
                 <b-card-text>
-                  <b-button size="sm" @click="loadOSData()" variant="outline-primary">
-                    SYNC OPENSEA SALES AND LISTINGS DATA
-                  </b-button>
+                  <b-card header="Initial Sync For ERC-721 New Token Contracts" style="min-width: 60rem; max-width: 60rem;" class="mb-2">
+                    <b-card-text>
+
+                      <b-form-group label-cols="4" content-cols="8" label="Contract address" label-align="right" description="Only ERC-721 contracts supported." class="mb-1">
+                        <b-form-input size="sm" v-model="settings.contract.address" placeholder="Enter contract address"></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="" :description="connected ? 'Retrieve ERC721 Info' : 'Please click Connect on the top right'" class="mb-1">
+                        <b-button :disabled="!connected" size="sm" @click="retrieveTokenInfo()" variant="outline-primary">
+                          Retrieve Info Via Web3
+                        </b-button>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="Symbol" label-align="right" class="mb-1">
+                        <b-form-input size="sm" v-model="settings.contract.symbol" readonly class="w-50"></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="Name" label-align="right" class="mb-1">
+                        <b-form-input size="sm" v-model="settings.contract.name" readonly></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="Total Supply" label-align="right" class="mb-1">
+                        <b-form-input size="sm" v-model="settings.contract.totalSupply" readonly class="w-50"></b-form-input>
+                      </b-form-group>
+
+                      <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply == null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
+                        <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
+                          Retrieve OS Data
+                        </b-button>
+                      </b-form-group>
+
+                      <b-form-group v-if="settings.contract.loaded != null" label-cols="4" content-cols="8" label="Loading" label-align="right" class="mb-1">
+                        <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
+                          <b-progress-bar :value="settings.contract.loaded">
+                            <span><strong>{{ commify(parseInt(settings.contract.loaded) + 1) }} {{ ((parseInt(settings.contract.loaded) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                          </b-progress-bar>
+                        </b-progress>
+                      </b-form-group>
+
+
+                      <!-- <b-row class="mt-1">
+                        <b-col cols="4"></b-col>
+                        <b-col cols="8">
+                          <b-button size="sm" @click="loadOSData()" variant="outline-primary">
+                            SYNC OPENSEA SALES AND LISTINGS DATA
+                          </b-button>
+                        </b-col>
+                      </b-row> -->
+                      <!-- <b-form-select size="sm" @change="recalculate('selectedTags')" v-model="selectedTags" :options="getTags" multiple :select-size="10" variant="outline-primary"></b-form-select> -->
+                    </b-card-text>
+                  </b-card>
+                  settings.contract: {{ settings.contract }}
                 </b-card-text>
                 <b-card-text>
                    TAKES ~ 6 MINUTES. YOU CAN CONTINUE BROWSING THE BEAUTIFUL BASTARDS WHILE THIS PROCESS RUNS IN THE BACKGROUND.
@@ -531,6 +580,13 @@
           categories: {},
 
           settings: {
+            contract: {
+              address: null,
+              name: null,
+              symbol: null,
+              totalSupply: null,
+              loaded: null,
+            },
             advancedSearch: false,
             cardView: false,
             searchTokenId: '',
@@ -843,9 +899,10 @@
 
           async processOSData() {
             console.log(new Date().toUTCString() + " processOSData() start");
-            var db0 = new Dexie("BastardDB");
+            var db0 = new Dexie("LostDB");
             db0.version(1).stores({
-              apiData: '&tokenId,asset,timestamp'
+              // apiData: 'contract,tokenId,asset,timestamp'
+              apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
             });
             const osAssets = await db0.apiData.toArray();
             const osData = {};
@@ -914,7 +971,7 @@
                   function handleAccountsChanged(accounts) {
                     console.log("handleAccountsChanged: " + JSON.stringify(accounts));
                     t.account = accounts[0];
-                    localStorage.setItem('bastardMyAccount', JSON.stringify(t.account));
+                    localStorage.setItem('lostMyAccount', JSON.stringify(t.account));
                     t.recalculate('web3 account update');
                   }
                   if (!this.connected) {
@@ -923,7 +980,53 @@
 
                   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                   this.account = accounts[0];
-                  localStorage.setItem('bastardMyAccount', JSON.stringify(this.account));
+                  localStorage.setItem('lostMyAccount', JSON.stringify(this.account));
+                } catch (e) {
+                  console.log("connect(): Error connecting");
+                }
+              }
+              const provider = new ethers.providers.Web3Provider(window.ethereum);
+              const network = await provider.getNetwork();
+              if (network.chainId == 1) {
+                this.connected = true;
+                this.recalculate('data loaded via web3');
+              } else {
+                alert("Please switch to the Ethereum mainnet and refresh");
+              }
+            }
+          },
+          async retrieveTokenInfo() {
+            console.log("retrieveTokenInfo: " + JSON.stringify(this.settings.contract));
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
+            const info = await erc721Helper.tokenInfo(this.settings.contract.address);
+            this.settings.contract.symbol = info[0];
+            this.settings.contract.name = info[1];
+            this.settings.contract.totalSupply = parseInt(info[2].toString());
+          },
+
+          async connect1_todelete() {
+            if (!window.ethereum) {
+              alert("Please use the https://metamask.io addon with Firefox, Chromium, Opera or Chrome, or any other other web3 browser, if you would like to view your Ethereum wallet's BGANPUNKSV2.");
+              this.connected = false;
+              this.account = null;
+            } else {
+              if (!window.ethereum.isConnected() || !window.ethereum['isUnlocked']) {
+                try {
+                  const t = this;
+                  function handleAccountsChanged(accounts) {
+                    console.log("handleAccountsChanged: " + JSON.stringify(accounts));
+                    t.account = accounts[0];
+                    localStorage.setItem('lostMyAccount', JSON.stringify(t.account));
+                    t.recalculate('web3 account update');
+                  }
+                  if (!this.connected) {
+                    window.ethereum.on('accountsChanged', handleAccountsChanged);
+                  }
+
+                  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                  this.account = accounts[0];
+                  localStorage.setItem('lostMyAccount', JSON.stringify(this.account));
                 } catch (e) {
                   console.log("connect(): Error connecting");
                 }
@@ -948,7 +1051,7 @@
                   }
                 }
                 this.owners = owners;
-                localStorage.setItem('bastardsOwners', JSON.stringify(owners));
+                localStorage.setItem('lostOwners', JSON.stringify(owners));
                 const ensMap = {};
                 for (let i in owners) {
                   const owner = owners[i].toLowerCase();
@@ -975,7 +1078,7 @@
                   }
                 }
                 this.ensMap = ensMap;
-                localStorage.setItem('bastardsENSMap', JSON.stringify(ensMap));
+                localStorage.setItem('lostENSMap', JSON.stringify(ensMap));
                 this.processing = "RECALCULATING DATA";
                 this.recalculate('data loaded via web3');
                 this.processing = null;
@@ -991,9 +1094,9 @@
           // --- OS Data Retrieval ---
           async loadOSData() {
             console.log(new Date().toUTCString() + " loadOSData() start");
-            var db0 = new Dexie("BastardDB");
+            var db0 = new Dexie("LostDB");
             db0.version(1).stores({
-              apiData: '&tokenId,asset,timestamp'
+              apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
             });
             const timestamp = parseInt(new Date() / 1000);
             const BATCHSIZE = 50; // Max 50
@@ -1002,19 +1105,28 @@
             const records = [];
             const delay = ms => new Promise(res => setTimeout(res, ms));
             await delay(DELAYINMILLIS);
-            const to = this.getTotalSupply;
-            for (let i = 0; i < to; i += BATCHSIZE) {
-              let url = "https://api.opensea.io/api/v1/assets?asset_contract_address=" + BASTARDADDRESS + "\&order_direction=desc\&limit=50\&offset=0";
+            const to = this.settings.contract.totalSupply;
+            console.log(new Date().toUTCString() + " loadOSData() to: " + to);
+            const contract = this.settings.contract.address.toLowerCase();
+            console.log(new Date().toUTCString() + " loadOSData() contract: " + contract);
+            if (this.settings.loaded == null) {
+              this.settings.contract.loaded = 0;
+            }
+            console.log(new Date().toUTCString() + " loadOSData() this.settings.contract.loaded: " + this.settings.contract.loaded);
+
+            for (let i = this.settings.contract.loaded; i < to; i += BATCHSIZE) {
+              let url = "https://api.opensea.io/api/v1/assets?asset_contract_address=" + contract + "\&order_direction=desc\&limit=50\&offset=0";
               for (let j = i; j < i + BATCHSIZE && j < to; j++) {
                 url = url + "&token_ids=" + j;
               }
               const elapsed = parseInt(new Date() / 1000) - timestamp;
-              this.processing = "DOWNLOADING LIVE DATA FROM OPENSEA: " + ethers.utils.commify(i) + " (BATCH SIZE " + BATCHSIZE + ") OF " + ethers.utils.commify(this.getTotalSupply) + ". ELAPSED " + elapsed + " SECONDS. CONTINUE BROWSING THE BEAUTIFUL BASTRADS IN THE MEANTIME";
+              // this.processing = "DOWNLOADING LIVE DATA FROM OPENSEA: " + ethers.utils.commify(i) + " (BATCH SIZE " + BATCHSIZE + ") OF " + ethers.utils.commify(to) + ". ELAPSED " + elapsed + " SECONDS. CONTINUE BROWSING THE BEAUTIFUL BASTRADS IN THE MEANTIME";
               const data = await fetch(url).then(response => response.json());
               if (data.assets && data.assets.length > 0) {
                 for (let assetIndex = 0; assetIndex < data.assets.length; assetIndex++) {
+                  this.settings.contract.loaded = parseInt(this.settings.contract.loaded) + 1;
                   const asset = data.assets[assetIndex];
-                  records.push({ tokenId: asset.token_id, asset: asset, timestamp: timestamp });
+                  records.push({ contract: contract, tokenId: asset.token_id, asset: asset, timestamp: timestamp });
                 }
               }
               await delay(DELAYINMILLIS);
@@ -1023,8 +1135,9 @@
                 console.log("error: " + error);
               });
             }
+            this.settings.contract.loaded = null;
             this.recalculate('loaded os data');
-            this.processing = null;
+            // this.processing = null;
             console.log(new Date().toUTCString() + " loadOSData() completed");
           },
 
@@ -1103,6 +1216,9 @@
             // const prefix = window.location.href.substring(separator + 3);
             return s;
           },
+          commify(e) {
+            return ethers.utils.commify(e.toString());
+          },
           formatETH(e) {
             return ethers.utils.commify(e.toString());
           },
@@ -1123,15 +1239,15 @@
                 Vue.delete(this.tags, key);
               }
             }
-            localStorage.setItem('bastardsTags', JSON.stringify(this.tags));
+            localStorage.setItem('lostTags', JSON.stringify(this.tags));
           },
           saveSettings() {
-            localStorage.setItem('bastardsSettings', JSON.stringify(this.settings));
+            localStorage.setItem('lostSettings', JSON.stringify(this.settings));
           },
           ensOrShortName(address) {
               let name = this.ensMap[address.toLowerCase()];
               if (name != null) {
-                name = name.substring(0, 16);
+                name = name.substring(0, 24);
               }
               return name;
           },
@@ -1139,24 +1255,24 @@
 
 
         mounted() {
-          if (localStorage.getItem('bastardsOwners')) {
-            this.owners = JSON.parse(localStorage.getItem('bastardsOwners'));
+          if (localStorage.getItem('lostOwners')) {
+            this.owners = JSON.parse(localStorage.getItem('lostOwners'));
           } else {
             this.owners = OWNERSSNAPSHOT;
           }
-          if (localStorage.getItem('bastardMyAccount')) {
-            this.account = JSON.parse(localStorage.getItem('bastardMyAccount'));
+          if (localStorage.getItem('lostMyAccount')) {
+            this.account = JSON.parse(localStorage.getItem('lostMyAccount'));
           }
-          if (localStorage.getItem('bastardsENSMap')) {
-            this.ensMap = JSON.parse(localStorage.getItem('bastardsENSMap'));
+          if (localStorage.getItem('lostENSMap')) {
+            this.ensMap = JSON.parse(localStorage.getItem('lostENSMap'));
           } else {
             this.ensMap = ENSMAPSNAPSHOT;
           }
-          if (localStorage.getItem('bastardsTags')) {
-            this.tags = JSON.parse(localStorage.getItem('bastardsTags'));
+          if (localStorage.getItem('lostTags')) {
+            this.tags = JSON.parse(localStorage.getItem('lostTags'));
           }
-          if (localStorage.getItem('bastardsSettings')) {
-            const savedSettings = JSON.parse(localStorage.getItem('bastardsSettings'));
+          if (localStorage.getItem('lostSettings')) {
+            const savedSettings = JSON.parse(localStorage.getItem('lostSettings'));
             if (savedSettings.cardView != null) {
               this.settings = savedSettings;
             }
