@@ -285,7 +285,7 @@
                     <b-table small :fields="fields" :items="pagedTokensResults" responsive="sm">
                       <template #cell(image)="data">
                         <b-link @click="displayToken(data.item.tokenId)" v-b-popover.hover="'Click for details'">
-                          <b-img-lazy width="300%" :src="data.item.osimage" />
+                          <b-img-lazy width="300%" :src="data.item.imageURL" />
                           <!-- <b-avatar rounded="sm" variant="light" size="10.0rem" :src="data.item.osimage"></b-avatar> -->
                         </b-link>
                       </template>
@@ -295,8 +295,8 @@
                         </b-link>
                         <br />
                         <span v-if="owners.length > 0">
-                          <b-link :href="'https://opensea.io/accounts/' + owners[data.item.tokenId]" v-b-popover.hover="'VIEW OWNER ACCOUNT IN OPENSEA'" target="_blank">
-                            <font size="-2">{{ ensOrShortName(owners[data.item.tokenId]) }}</font>
+                          <b-link :href="'https://opensea.io/accounts/' + data.item.owner" v-b-popover.hover="'VIEW OWNER ACCOUNT IN OPENSEA'" target="_blank">
+                            <font size="-2">{{ ensOrShortName(data.item.owner) }}</font>
                           </b-link>
                         </span>
                         <b-link size="sm" @click="settings.searchAccount = owners[data.item.tokenId]; tabIndex = 0; recalculate('tokenSearch'); " v-b-popover.hover="'FILTER BY OWNER ACCOUNT'" variant="link">
@@ -309,7 +309,8 @@
                         </span>
                         <span v-if="!data.item.hasMosaic">
                           <b-link :href="'hypedafmosaic/' + data.item.tokenId + '.png'" v-b-popover.hover="'VIEW HYPED AF (ANIMATED) MOSAIC'" target="_blank">
-                            <b-icon-patch-question shift-v="+1" font-scale="0.8"></b-icon-patch-question>
+                            <!-- <b-icon-patch-question shift-v="+1" font-scale="0.8"></b-icon-patch-question> -->
+                            ??
                           </b-link>
                         </span>
                         <!--
@@ -338,13 +339,21 @@
                         </div>
                       </template>
                       <template #cell(description)="data">
-                        <span v-for="line in data.item.description.split('\n')">
-                          <b>{{ line }}</b><br />
+                        <!-- <pre>{{ data.item.description }}</pre> -->
+                        <span v-if="data.item.description != null && data.item.description.length > 0">
+                          <font size="-2">
+                            <span v-for="line in data.item.description.split('\n')">
+                              {{ line }}<br />
+                            </span>
+                          </font>
                         </span>
+                        <!-- <span v-for="line in data.item.description.split('\n')">
+                          <b>{{ line }}</b><br />
+                        </span> -->
                       </template>
                       <template #cell(attributes)="data">
-                        <b-row v-for="attribute in data.item.attributes"  v-bind:key="attribute.trait_type" class="m-0 p-0">
-                          <b-col class="m-0 p-0"><font size="-3">{{ attribute.trait_type }}</font></b-col><b-col class="m-0 p-0"><b><font size="-2">{{ attribute.value }}</font></b></font></b-col>
+                        <b-row v-for="trait in data.item.traits"  v-bind:key="trait.trait_type" class="m-0 p-0">
+                          <b-col class="m-0 p-0"><font size="-3">{{ trait.trait_type }}</font></b-col><b-col class="m-0 p-0"><b><font size="-2">{{ trait.value }}</font></b></font></b-col>
                         </b-row>
                       </template>
                     </b-table>
@@ -640,10 +649,10 @@
           ],
           categoryFilter: {},
           fields: [
-            { key: 'image', label: 'BASTARD', thStyle: 'width: 25%;' },
-            { key: 'tokenId', label: 'INFO', thStyle: 'width: 25%;' },
-            { key: 'attributes', label: 'ATTRIBUTES', thStyle: 'width: 25%;' },
-            { key: 'description', label: 'LYRICS', thStyle: 'width: 25%;' },
+            { key: 'image', label: 'BASTARD', thStyle: 'width: 20%;' },
+            { key: 'tokenId', label: 'INFO', thStyle: 'width: 20%;' },
+            { key: 'attributes', label: 'ATTRIBUTES', thStyle: 'width: 20%;' },
+            { key: 'description', label: 'LYRICS', thStyle: 'width: 20%;', tdClass: 'text-left' },
           ],
           sellOrdersFields: [
             { key: 'eth', label: 'ETH' },
