@@ -251,7 +251,7 @@
                               {{ '#' + record.tokenId }}
                             </b-link>
                             <b-link :href="'https://opensea.io/accounts/' + owners[record.tokenId]" v-b-popover.hover="'VIEW OWNER ACCOUNT IN OPENSEA'" target="_blank">
-                              {{ ensOrShortName(owners[record.tokenId]) }}
+                              {{ ensOrShortName(record.owner) }}
                             </b-link>
                             <b-link v-if="cardImageSizeCurrent >= 200" size="sm" @click="settings.searchAccount = owners[record.tokenId]; tabIndex = 0; recalculate('tokenSearch'); " v-b-popover.hover="'FILTER BY OWNER ACCOUNT'" variant="link">
                               <b-icon-search shift-v="+1" font-scale="0.8"></b-icon-search>
