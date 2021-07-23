@@ -92,10 +92,11 @@
                     <b-form-spinbutton wrap @change="setFrame()" v-model.trim="selectedItemFrame" min="0" :max="selectedItemFrames == null ? 0 : (selectedItemFrames - 1)" class="mr-2"></b-form-spinbutton>
                     <b-input-group-text>0</b-input-group-text>
                   </template>
-                  <b-form-input @change="setFrame()" v-model.trim="selectedItemFrame" type="range" min="0" :max="selectedItemFrames == null ? 0 : (selectedItemFrames - 1)" class="w-25"></b-form-input>
-                  <template #append>
-                    <b-input-group-text>{{ selectedItemFrames == null ? 0 : (selectedItemFrames - 1) }}</b-input-group-text>
-                  </template>
+                  <b-form-input @change="setFrame()" v-model.trim="selectedItemFrame" type="range" min="0" :max="selectedItemFrames == null ? 0 : (selectedItemFrames - 1)" class="w-25">
+                    <template #append>
+                      <b-input-group-text>{{ selectedItemFrames == null ? 0 : (selectedItemFrames - 1) }}</b-input-group-text>
+                    </template>
+                  </b-form-input>
                 </b-input-group>
               </b-modal>
             </div>
@@ -368,6 +369,8 @@
 
                       <b-form-group label-cols="4" content-cols="8" label="Contract address" label-align="right" description="Only ERC-721 contracts supported. Small data set e.g. BGANPUNKSV1 '0x9126B817CCca682BeaA9f4EaE734948EE1166Af1'" class="mb-1">
                         <b-form-input size="sm" v-model="settings.contract.address" placeholder="Enter contract address"></b-form-input>
+
+                        <!-- TODO sampleCollections -->
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="connected ? 'Retrieve ERC721 Info' : 'Please click Connect on the top right'" class="mb-1">
@@ -394,16 +397,32 @@
                         </b-button>
                       </b-form-group>
 
+                      <b-form-group v-if="settings.contract.loadingOwners != null" label-cols="4" content-cols="8" label="Loading owner data via ERC721Helper" label-align="right" class="mb-1">
+                        <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
+                          <b-progress-bar :value="settings.contract.loadingOwners">
+                            <span><strong>{{ commify(parseInt(settings.contract.loadingOwners) + 1) }} {{ ((parseInt(settings.contract.loadingOwners) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                          </b-progress-bar>
+                        </b-progress>
+                      </b-form-group>
+
+                      <b-form-group v-if="settings.contract.loadingENS != null" label-cols="4" content-cols="8" label="Loading ENS data" label-align="right" class="mb-1">
+                        <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
+                          <b-progress-bar :value="settings.contract.loadingENS">
+                            <span><strong>{{ commify(parseInt(settings.contract.loadingENS) + 1) }} {{ ((parseInt(settings.contract.loadingENS) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                          </b-progress-bar>
+                        </b-progress>
+                      </b-form-group>
+
                       <b-form-group label-cols="4" content-cols="8" label="" :description="settings.contract.totalSupply != null ? 'Retrieve OS Info' : 'Please retrieve ERC-721 info above'" class="mb-1">
                         <b-button :disabled="settings.contract.totalSupply == null" size="sm" @click="loadOSData()" variant="outline-primary">
                           Retrieve OS Data
                         </b-button>
                       </b-form-group>
 
-                      <b-form-group v-if="settings.contract.loaded != null" label-cols="4" content-cols="8" label="Loading" label-align="right" class="mb-1">
+                      <b-form-group v-if="settings.contract.loadingOSData != null" label-cols="4" content-cols="8" label="Loading" label-align="right" class="mb-1">
                         <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
-                          <b-progress-bar :value="settings.contract.loaded">
-                            <span><strong>{{ commify(parseInt(settings.contract.loaded) + 1) }} {{ ((parseInt(settings.contract.loaded) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                          <b-progress-bar :value="settings.contract.loadingOSData">
+                            <span><strong>{{ commify(parseInt(settings.contract.loadingOSData) + 1) }} {{ ((parseInt(settings.contract.loadingOSData) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
                           </b-progress-bar>
                         </b-progress>
                       </b-form-group>
@@ -596,7 +615,9 @@
               name: null,
               symbol: null,
               totalSupply: null,
-              loaded: null,
+              loadingOwners: null,
+              loadingOSData: null,
+              loadingENS: null,
             },
             advancedSearch: false,
             cardView: false,
@@ -686,6 +707,22 @@
             { tokenId: 10834, image: "bganpunkv2_10834.gif" },
             { tokenId: 11100, image: "bganpunkv2_11100.png" },
             { tokenId: 11258, image: "bganpunkv2_11258.png" },
+          ],
+          sampleCollections: [
+            { name: "CryptoPunks", address: "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB" },
+            { name: "MoonCats - Acclimated - Official", address: "0xc3f733ca98E0daD0386979Eb96fb1722A1A05E69" },
+            { name: "MoonCats - Wrapped - Unofficial", address: "0x7C40c393DC0f283F318791d746d894DdD3693572" },
+            { name: "Wrapped CryptoCats", address: "0xd0e7Bc3F1EFc5f098534Bce73589835b8273b9a0" },
+            { name: "Hashmasks", address: "0xC2C747E0F7004F9E8817Db2ca4997657a7746928" },
+            { name: "Bastard GAN Punks v1", address: "0x9126B817CCca682BeaA9f4EaE734948EE1166Af1" },
+            { name: "Bastard GAN Punks v2", address: "0x31385d3520bCED94f77AaE104b406994D8F2168C" },
+            { name: "PunkBodies", address: "0x837779Ed98209C38b9bF77804a4f0105B9eb2E02" },
+            { name: "Bored Ape Yacht Club", address: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D" },
+            { name: "Meebits", address: "0x7Bd29408f11D2bFC23c34f18275bBf23bB716Bc7" },
+            { name: "CryptoTrunks", address: "0x375ea781c49EaFEdDE07AFe6196f885761f166Ae" },
+            { name: "Bonsai by ZENFT", address: "0xeC9C519D49856Fd2f8133A0741B4dbE002cE211b" },
+            { name: "CryptoCockatoos", address: "0x7685376aF33104dD02be287ed857a19Bb4A24EA2" },
+            { name: "Boring Bananas", address: "0xB9aB19454ccb145F9643214616c5571B8a4EF4f2" },
           ],
         },
 
@@ -1098,15 +1135,18 @@
             const owners = [];
             const NFTOWNERBATCHSIZE = 500;
             const totalSupply = this.settings.contract.totalSupply;
+            this.settings.contract.loadingOwners = 0;
             for (let i = 0; i < totalSupply; i += NFTOWNERBATCHSIZE) {
               const to = (i + NFTOWNERBATCHSIZE > totalSupply) ? totalSupply : i + NFTOWNERBATCHSIZE;
               // this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
               const ownersResult = await erc721Helper.owners(this.settings.contract.address, i, to);
+              this.settings.contract.loadingOwners = to;
               console.log(new Date().toUTCString() + " from: " + i + ", to: " + to + ", size: " + ownersResult[0].length);
               for (let j = 0; j < ownersResult[0].length; j++) {
                 owners.push({ tokenId: ownersResult[0][j].toString(), owner: ownersResult[1][j] });
               }
             }
+            this.settings.contract.loadingOwners = null;
             console.log(JSON.stringify(owners, null, 2));
             this.owners = owners;
             localStorage.setItem('lostOwners', JSON.stringify(owners));
@@ -1124,10 +1164,12 @@
             let addresses = Object.keys(ensMap);
             const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
             const ENSOWNERBATCHSIZE = 500;
+            this.settings.contract.loadingENS = 0;
             for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
             //   this.processing = "RETRIEVING LIVE ENS REVERSE RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " OF " + ethers.utils.commify(addresses.length);
               const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
               const allnames = await ensReverseRecordsContract.getNames(batch);
+              this.settings.contract.loadingENS = parseInt(i) + batch.length;
             //   // NOT CHECKING ADDRESSES AS THE ADDRESSES CAME FROM A CONTRACT. AND account. const validNames = allnames.filter((n) => normalize(n) === n );
               for (let j = 0; j < batch.length; j++) {
                 const address = batch[j];
@@ -1138,6 +1180,7 @@
             }
             ensMap["0x000000000000000000000000000000000000dEaD".toLowerCase()] = "0xdEaD_";
             console.log(JSON.stringify(ensMap, null, 2));
+            this.settings.contract.loadingENS = null;
             this.ensMap = ensMap;
             localStorage.setItem('lostENSMap', JSON.stringify(ensMap));
             // // this.processing = "RECALCULATING DATA";
@@ -1249,12 +1292,12 @@
             console.log(new Date().toUTCString() + " loadOSData() to: " + to);
             const contract = this.settings.contract.address.toLowerCase();
             console.log(new Date().toUTCString() + " loadOSData() contract: " + contract);
-            if (this.settings.loaded == null) {
-              this.settings.contract.loaded = 0;
+            if (this.settings.loadingOSData == null) {
+              this.settings.contract.loadingOSData = 0;
             }
-            console.log(new Date().toUTCString() + " loadOSData() this.settings.contract.loaded: " + this.settings.contract.loaded);
+            console.log(new Date().toUTCString() + " loadOSData() this.settings.contract.loadingOSData: " + this.settings.contract.loadingOSData);
 
-            for (let i = this.settings.contract.loaded; i < to; i += BATCHSIZE) {
+            for (let i = this.settings.contract.loadingOSData; i < to; i += BATCHSIZE) {
               let url = "https://api.opensea.io/api/v1/assets?asset_contract_address=" + contract + "\&order_direction=desc\&limit=50\&offset=0";
               for (let j = i; j < i + BATCHSIZE && j < to; j++) {
                 url = url + "&token_ids=" + this.owners[j].tokenId;
@@ -1265,7 +1308,7 @@
               const data = await fetch(url).then(response => response.json());
               if (data.assets && data.assets.length > 0) {
                 for (let assetIndex = 0; assetIndex < data.assets.length; assetIndex++) {
-                  this.settings.contract.loaded = parseInt(this.settings.contract.loaded) + 1;
+                  this.settings.contract.loadingOSData = parseInt(this.settings.contract.loadingOSData) + 1;
                   const asset = data.assets[assetIndex];
                   records.push({ contract: contract, tokenId: asset.token_id, asset: asset, timestamp: timestamp });
                 }
@@ -1276,7 +1319,7 @@
                 console.log("error: " + error);
               });
             }
-            this.settings.contract.loaded = null;
+            this.settings.contract.loadingOSData = null;
             this.recalculate('loaded os data');
             // this.processing = null;
             console.log(new Date().toUTCString() + " loadOSData() completed");
@@ -1416,7 +1459,7 @@
           }
           if (localStorage.getItem('lostSettings')) {
             const savedSettings = JSON.parse(localStorage.getItem('lostSettings'));
-            if (savedSettings.cardView != null) {
+            if ("loadingOSData" in savedSettings.contract) {
               this.settings = savedSettings;
             }
           }
