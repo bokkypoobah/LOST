@@ -362,15 +362,29 @@
                 </b-card-text>
               </b-tab>
 
-              <b-tab title="SYNC DATA">
+              <b-tab active title="SYNC DATA">
                 <b-card-text>
                   <b-card header="Initial Sync For ERC-721 New Token Contracts" style="min-width: 60rem; max-width: 60rem;" class="mb-2">
                     <b-card-text>
 
                       <b-form-group label-cols="4" content-cols="8" label="Contract address" label-align="right" description="Only ERC-721 contracts supported. Small data set e.g. BGANPUNKSV1 '0x9126B817CCca682BeaA9f4EaE734948EE1166Af1'" class="mb-1">
-                        <b-form-input size="sm" v-model="settings.contract.address" placeholder="Enter contract address"></b-form-input>
 
                         <!-- TODO sampleCollections -->
+                        <b-input-group>
+                          <b-form-input size="sm" v-model="settings.contract.address" placeholder="Enter contract address"></b-form-input>
+                          <template #append class="mb-2">
+                            <!-- <b-button variant="outline-primary" class="pt-0 pb-1">XXX</b-button> -->
+
+                            <b-dropdown size="sm"  variant="outline-primary" toggle-class="text-decoration-none" no-caret>
+                              <template #button-content>
+                                <b-icon-chevron-double-down shift-v="+1" font-scale="1.0"></b-icon-chevron-double-down>
+                              </template>
+                              <div v-for="i in sampleCollections">
+                                <b-dropdown-item @click="settings.contract.address = i.address; " >{{ i.name }}</b-dropdown-item>
+                              </div>
+                            </b-dropdown>
+                          </template>
+                        </b-input-group>
                       </b-form-group>
 
                       <b-form-group label-cols="4" content-cols="8" label="" :description="connected ? 'Retrieve ERC721 Info' : 'Please click Connect on the top right'" class="mb-1">
@@ -709,7 +723,7 @@
             { tokenId: 11258, image: "bganpunkv2_11258.png" },
           ],
           sampleCollections: [
-            { name: "CryptoPunks", address: "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB" },
+            // { name: "CryptoPunks", address: "0xb47e3cd837dDF8e4c57F05d70Ab865de6e193BBB" },
             { name: "MoonCats - Acclimated - Official", address: "0xc3f733ca98E0daD0386979Eb96fb1722A1A05E69" },
             { name: "MoonCats - Wrapped - Unofficial", address: "0x7C40c393DC0f283F318791d746d894DdD3693572" },
             { name: "Wrapped CryptoCats", address: "0xd0e7Bc3F1EFc5f098534Bce73589835b8273b9a0" },
