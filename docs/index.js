@@ -89,7 +89,6 @@ const app = new Vue({
       reschedule: false,
       jsonData: null,
       selectedId: null,
-      zombieBabies: [0, 1, 2, 3, 4, 5, 6, 7],
 
       name: 'BootstrapVue',
       show: true,
