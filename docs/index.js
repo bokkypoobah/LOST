@@ -89,6 +89,7 @@ const app = new Vue({
       reschedule: false,
       jsonData: null,
       selectedId: null,
+      zombieBabies: [0, 1, 2, 3, 4, 5, 6, 7],
 
       name: 'BootstrapVue',
       show: true,
@@ -106,6 +107,9 @@ const app = new Vue({
     },
     moduleName () {
       return this.$route.name;
+    },
+    getLogo() {
+      return "images/ZombieBaby_00" + parseInt(Math.random() * 8) + ".png";
     },
   },
   mounted() {
