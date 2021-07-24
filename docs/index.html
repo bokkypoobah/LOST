@@ -99,9 +99,8 @@
       <b-container fluid class="m-0 p-1">
         <div>
           <b-navbar variant="light" fixed="top" class="m-0 p-0">
-            <b-navbar-brand to="/" variant="primary" class="m-0 p-0">
-              <!-- <img src="images/ZombieBaby_006_transparentbg.png" v-b-popover.hover="'Here to help organise your NFTs, and search for gems'" width="80px" alt="Zombie Babies" class="m-0"/> -->
-              <b-avatar variant="light" size="4.0rem" :src="getLogo" v-b-popover.hover.bottom="'We are here to help organise your NFTs, and search for new gems'" class="m-0 p-0"></b-avatar>
+            <b-navbar-brand to="/" variant="primary" class="m-0 p-0" v-b-popover.hover.bottom="'We are here to help organise your NFTs, and search for new gems'">
+              <b-avatar rounded="lg" variant="light" size="4.0rem" :src="getLogo" class="m-0 p-0"></b-avatar>
               LOST?
             </b-navbar-brand>
             <b-navbar-nav class="ml-auto">
