@@ -414,7 +414,7 @@
                       <b-form-group v-if="settings.contract.loadingOwners != null" label-cols="4" content-cols="8" label="Loading owner data via ERC721Helper" label-align="right" class="mb-1">
                         <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
                           <b-progress-bar :value="settings.contract.loadingOwners">
-                            <span><strong>{{ commify(parseInt(settings.contract.loadingOwners) + 1) }} {{ ((parseInt(settings.contract.loadingOwners) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                            <span><strong>{{ commify(settings.contract.loadingOwners) }} {{ (settings.contract.loadingOwners * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
                           </b-progress-bar>
                         </b-progress>
                       </b-form-group>
@@ -422,7 +422,7 @@
                       <b-form-group v-if="settings.contract.loadingENS != null" label-cols="4" content-cols="8" label="Loading ENS data" label-align="right" class="mb-1">
                         <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
                           <b-progress-bar :value="settings.contract.loadingENS">
-                            <span><strong>{{ commify(parseInt(settings.contract.loadingENS) + 1) }} {{ ((parseInt(settings.contract.loadingENS) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                            <span><strong>{{ commify(settings.contract.loadingENS) }} {{ (settings.contract.loadingENS * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
                           </b-progress-bar>
                         </b-progress>
                       </b-form-group>
@@ -436,7 +436,7 @@
                       <b-form-group v-if="settings.contract.loadingOSData != null" label-cols="4" content-cols="8" label="Loading" label-align="right" class="mb-1">
                         <b-progress :max="settings.contract.totalSupply" height="2rem" variant="success" striped :animated="true">
                           <b-progress-bar :value="settings.contract.loadingOSData">
-                            <span><strong>{{ commify(parseInt(settings.contract.loadingOSData) + 1) }} {{ ((parseInt(settings.contract.loadingOSData) + 1) * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
+                            <span><strong>{{ commify(settings.contract.loadingOSData) }} {{ (settings.contract.loadingOSData * 100 / settings.contract.totalSupply).toFixed(2) }}%</strong></span>
                           </b-progress-bar>
                         </b-progress>
                       </b-form-group>
@@ -1154,7 +1154,7 @@
               const to = (i + NFTOWNERBATCHSIZE > totalSupply) ? totalSupply : i + NFTOWNERBATCHSIZE;
               // this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
               const ownersResult = await erc721Helper.owners(this.settings.contract.address, i, to);
-              this.settings.contract.loadingOwners = to;
+              this.settings.contract.loadingOwners += ownersResult[0].length;
               console.log(new Date().toUTCString() + " from: " + i + ", to: " + to + ", size: " + ownersResult[0].length);
               for (let j = 0; j < ownersResult[0].length; j++) {
                 owners.push({ tokenId: ownersResult[0][j].toString(), owner: ownersResult[1][j] });
@@ -1183,7 +1183,7 @@
             //   this.processing = "RETRIEVING LIVE ENS REVERSE RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " OF " + ethers.utils.commify(addresses.length);
               const batch = addresses.slice(i, parseInt(i) + ENSOWNERBATCHSIZE);
               const allnames = await ensReverseRecordsContract.getNames(batch);
-              this.settings.contract.loadingENS = parseInt(i) + batch.length;
+              this.settings.contract.loadingENS += batch.length;
             //   // NOT CHECKING ADDRESSES AS THE ADDRESSES CAME FROM A CONTRACT. AND account. const validNames = allnames.filter((n) => normalize(n) === n );
               for (let j = 0; j < batch.length; j++) {
                 const address = batch[j];
@@ -1306,9 +1306,7 @@
             console.log(new Date().toUTCString() + " loadOSData() to: " + to);
             const contract = this.settings.contract.address.toLowerCase();
             console.log(new Date().toUTCString() + " loadOSData() contract: " + contract);
-            if (this.settings.loadingOSData == null) {
-              this.settings.contract.loadingOSData = 0;
-            }
+            this.settings.contract.loadingOSData = 0;
             console.log(new Date().toUTCString() + " loadOSData() this.settings.contract.loadingOSData: " + this.settings.contract.loadingOSData);
 
             for (let i = this.settings.contract.loadingOSData; i < to; i += BATCHSIZE) {
@@ -1321,8 +1319,8 @@
               // this.processing = "DOWNLOADING LIVE DATA FROM OPENSEA: " + ethers.utils.commify(i) + " (BATCH SIZE " + BATCHSIZE + ") OF " + ethers.utils.commify(to) + ". ELAPSED " + elapsed + " SECONDS. CONTINUE BROWSING THE BEAUTIFUL BASTRADS IN THE MEANTIME";
               const data = await fetch(url).then(response => response.json());
               if (data.assets && data.assets.length > 0) {
+                this.settings.contract.loadingOSData += data.assets.length;
                 for (let assetIndex = 0; assetIndex < data.assets.length; assetIndex++) {
-                  this.settings.contract.loadingOSData = parseInt(this.settings.contract.loadingOSData) + 1;
                   const asset = data.assets[assetIndex];
                   records.push({ contract: contract, tokenId: asset.token_id, asset: asset, timestamp: timestamp });
                 }
