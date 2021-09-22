@@ -804,8 +804,8 @@
               await this.processOSData();
               // this.data = BASTARDDATA;
               // this.generateTokenData();
-              // this.calculateTokensOwned();
-              // this.calculateCategories();
+              this.calculateTokensOwned();
+              this.calculateCategories();
             }
             this.tokensSearchResults = this.calculateSearchResults();
             // this.collatedOwners = this.calculateCollatedOwners();
@@ -906,26 +906,26 @@
             console.log(new Date().toUTCString() + " processOSData() completed");
           },
 
-          generateTokenData() {
-            const results = [];
-            for (const record of this.owners) {
-              // console.log(new Date().toUTCString() + " - calculateTokensOwned() record: " + JSON.stringify(record));
-              results.push(record);
-            }
-            // if (this.owners.length > 0) {
-              // const account = this.account.toLowerCase();
-              // console.log(new Date().toUTCString() + " - calculateTokensOwned() account: " + JSON.stringify(account));
-              // for (let i in BASTARDDATA) {
-              //   const item = BASTARDDATA[i];
-              //   const owner = this.owners[i] ? this.owners[i].owner : null;
-              //   if (owner && owner.toLowerCase() == account) {
-              //     results.push(item.tokenId);
-              //   }
-              // }
-            // }
-            console.log(new Date().toUTCString() + " - calculateTokensOwned() completed: " + JSON.stringify(results));
-            this.data = results;
-          },
+          // generateTokenData() {
+          //   const results = [];
+          //   for (const record of this.owners) {
+          //     // console.log(new Date().toUTCString() + " - calculateTokensOwned() record: " + JSON.stringify(record));
+          //     results.push(record);
+          //   }
+          //   // if (this.owners.length > 0) {
+          //     // const account = this.account.toLowerCase();
+          //     // console.log(new Date().toUTCString() + " - calculateTokensOwned() account: " + JSON.stringify(account));
+          //     // for (let i in BASTARDDATA) {
+          //     //   const item = BASTARDDATA[i];
+          //     //   const owner = this.owners[i] ? this.owners[i].owner : null;
+          //     //   if (owner && owner.toLowerCase() == account) {
+          //     //     results.push(item.tokenId);
+          //     //   }
+          //     // }
+          //   // }
+          //   console.log(new Date().toUTCString() + " - calculateTokensOwned() completed: " + JSON.stringify(results));
+          //   this.data = results;
+          // },
 
 
           calculateTokensOwned() {
@@ -933,8 +933,8 @@
             if (this.owners.length > 0 && this.account) {
               const account = this.account.toLowerCase();
               console.log(new Date().toUTCString() + " - calculateTokensOwned() account: " + JSON.stringify(account));
-              for (let i in BASTARDDATA) {
-                const item = BASTARDDATA[i];
+              for (let i in this.data) {
+                const item = this.data[i];
                 const owner = this.owners[i] ? this.owners[i].owner : null;
                 if (owner && owner.toLowerCase() == account) {
                   results.push(item.tokenId);
@@ -946,25 +946,28 @@
           },
 
           calculateCategories() {
-            const collator = {};
+            const categories = {};
             for (let i in this.data) {
               const item = this.data[i];
-              for (let k in item.attributes) {
-                const attribute = item.attributes[k];
-                const traitType = attribute.trait_type;
-                const value = attribute.value;
-                if (!collator[traitType]) {
-                  collator[traitType] = {};
+              // if (i < 2) {
+              //   console.log(i + ": " + JSON.stringify(item));
+              // }
+              for (let k in item.traits) {
+                const trait = item.traits[k];
+                const traitType = trait.trait_type;
+                const value = trait.value;
+                if (!categories[traitType]) {
+                  categories[traitType] = {};
                 }
-                if (!collator[traitType][value]) {
-                  collator[traitType][value] = 1;
+                if (!categories[traitType][value]) {
+                  categories[traitType][value] = 1;
                 } else {
-                  collator[traitType][value] = collator[traitType][value] + 1;
+                  categories[traitType][value] = categories[traitType][value] + 1;
                 }
               }
             }
             console.log(new Date().toUTCString() + " - calculateCategories() completed");
-            this.categories = collator;
+            this.categories = categories;
           },
 
           calculateSearchResults() {
@@ -972,8 +975,8 @@
             const selectedTags = this.selectedTags == null || (this.selectedTags.length == 1 && this.selectedTags[0] == null) ? null : this.selectedTags;
 
             function getAttribute(data1, category) {
-              for (let attributeIndex in data1.attributes) {
-                const attribute = data1.attributes[attributeIndex];
+              for (let attributeIndex in data1.traits) {
+                const attribute = data1.traits[attributeIndex];
                 if (attribute.trait_type == category) {
                   return attribute.value;
                 }
@@ -1148,12 +1151,13 @@
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const erc721Helper = new ethers.Contract(ERC721HELPERADDRESS, ERC721HELPERABI, provider);
             const owners = [];
-            const NFTOWNERBATCHSIZE = 500;
+            const NFTOWNERBATCHSIZE = 250;
             const totalSupply = this.settings.contract.totalSupply;
             this.settings.contract.loadingOwners = 0;
             for (let i = 0; i < totalSupply; i += NFTOWNERBATCHSIZE) {
               const to = (i + NFTOWNERBATCHSIZE > totalSupply) ? totalSupply : i + NFTOWNERBATCHSIZE;
               // this.processing = "RETRIEVING LIVE BGANPUNKSV2 ONWERSHIP RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " - " + ethers.utils.commify(parseInt(to) - 1) + " OF " + ethers.utils.commify(totalSupply);
+              console.log(new Date().toUTCString() + " retrieving owners from: " + i + ", to: " + to);
               const ownersResult = await erc721Helper.owners(this.settings.contract.address, i, to);
               this.settings.contract.loadingOwners += ownersResult[0].length;
               console.log(new Date().toUTCString() + " from: " + i + ", to: " + to + ", size: " + ownersResult[0].length);
@@ -1178,7 +1182,7 @@
             console.log(JSON.stringify(ensMap, null, 2));
             let addresses = Object.keys(ensMap);
             const ensReverseRecordsContract = new ethers.Contract(ENSREVERSERECORDSADDRESS, ENSREVERSERECORDSABI, provider);
-            const ENSOWNERBATCHSIZE = 500;
+            const ENSOWNERBATCHSIZE = 250;
             this.settings.contract.loadingENS = 0;
             for (let i = 0; i < addresses.length; i += ENSOWNERBATCHSIZE) {
             //   this.processing = "RETRIEVING LIVE ENS REVERSE RECORDS FROM THE ETHEREUM MAINNET: " + ethers.utils.commify(i) + " OF " + ethers.utils.commify(addresses.length);
@@ -1296,7 +1300,7 @@
               apiData: '[contract+tokenId],contract,tokenId,asset,timestamp'
             });
             const timestamp = parseInt(new Date() / 1000);
-            const BATCHSIZE = 50; // Max 50
+            const BATCHSIZE = 30; // Max 30
             const DELAYINMILLIS = 100;
             let page = 0;
             const records = [];
@@ -1415,7 +1419,11 @@
             return s;
           },
           commify(e) {
-            return ethers.utils.commify(e.toString());
+            try {
+              return ethers.utils.commify(e.toString());
+            } catch (e) {
+              return e.toString();
+            }
           },
           formatDate(d) {
             if (d == 0) {
